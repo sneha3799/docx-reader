@@ -28,4 +28,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.android.support:multidex:1.0.2'
     implementation files('libs/poishadow-all.jar')
+    implementation files('libs/fr.opensagres.xdocreport.itext.extension-gae-1.0.6.jar')
+    implementation files('libs/org.apache.poi.xwpf.converter.core-gae-1.0.6.jar')
+    implementation files('libs/org.apache.poi.xwpf.converter.pdf-gae-1.0.6.jar')
 }
