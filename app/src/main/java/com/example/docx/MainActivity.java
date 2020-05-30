@@ -2,21 +2,30 @@ package com.example.docx;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,10 +60,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    LinearLayout mainUI;
 
     Button btn,btn1;
     public static InputStream InputstreamGeneralPhotos1;
@@ -69,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     public static InputStream InputstreamFourhoursPhotos2;
     public static InputStream InputstreamFourhoursPhotos3;
     public static InputStream InputstreamFourhoursPhotos4;
-
+    List<XWPFPictureData> picList;
     static {
         System.setProperty(
                 "org.apache.poi.javax.xml.stream.XMLInputFactory",
@@ -113,7 +124,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textView = (TextView)findViewById(R.id.textView);
+        mainUI = findViewById(R.id.MainUI);
+
+//        textView = (TextView)findViewById(R.id.textView);
 //        img_generalPhotos1 = (ImageView)findViewById(R.id.imageView);
 //        img_generalPhotos2 = (ImageView)findViewById(R.id.imageView2);
 
@@ -148,47 +161,21 @@ public class MainActivity extends AppCompatActivity {
 
                         XWPFDocument docx = new XWPFDocument(inputStream);
                         traverseBodyElements(docx.getBodyElements());
+                        picList = docx.getAllPackagePictures();
 
                         docx.close();
 
-//                        List<XWPFTable> table = docx.getTables();
-//                        for (XWPFTable xwpfTable : table) {
-//                            List<XWPFTableRow> row = xwpfTable.getRows();
-//                            for (XWPFTableRow xwpfTableRow : row) {
-//                                List<XWPFTableCell> cell = xwpfTableRow.getTableCells();
-//                                for (XWPFTableCell xwpfTableCell : cell) {
-//                                    if (xwpfTableCell != null) {
-//                                        System.out.println(xwpfTableCell.getText());
-//                                        String s = xwpfTableCell.getText();
-//                                        for (XWPFParagraph p : xwpfTableCell.getParagraphs()) {
-//                                            for (XWPFRun run : p.getRuns()) {
-//                                                for (XWPFPicture pic : run.getEmbeddedPictures()) {
-//                                                    byte[] pictureData = pic.getPictureData().getData();
-//                                                    System.out.println("picture : " + pictureData);
-//                                                    System.out.println(pic.getCTPicture());
-////                                                    InputstreamGeneralPhotos1 = new ByteArrayInputStream(pic.getCTPicture());
-//////                                                    imageRun.addPicture(openFileInput(pic.getFileName()),XWPFDocument.PICTURE_TYPE_PNG,pic.getFileName(),50,50);
-////                                                    if (InputstreamGeneralPhotos1 != null) {
-////                                                        Bitmap selectedImage = BitmapFactory.decodeStream(InputstreamGeneralPhotos1);
-////                                                        img_generalPhotos1.setImageBitmap(selectedImage);
-//////                                                      generalPhotosUnSelect1.setVisibility(View.VISIBLE);
-////                                                    }
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-
-//                        printDescriptionOfImagesInCell(docx);
-//                        extractImages(docx);
-//                        extractText(docx);
 
                         List<XWPFParagraph> paragraphList = docx.getParagraphs();
-
                         for (XWPFParagraph paragraph : paragraphList) {
                             String paragrapthText = paragraph.getText();
-                            System.out.println(paragrapthText);
 
+                            if(paragrapthText.length()>1) {
+//                                System.out.println("PARATEXT "+paragrapthText);
+                                addTextViews(paragrapthText);
+//                                addElementsUI(paragrapthText,null);
+
+                            }
                         }
                 }
             }else {
@@ -204,81 +191,122 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    static void traversePictures(List<XWPFPicture> pictures) throws Exception {
+    public void traversePictures(List<XWPFPicture> pictures)  {
         for (XWPFPicture picture : pictures) {
-            System.out.println(picture);
+
+            //Create Image view to display images
+
+            System.out.println("Picture "+picture);
             XWPFPictureData pictureData = picture.getPictureData();
-            System.out.println(pictureData);
+            System.out.println("PictureData "+ pictureData);
+
+            addElements(pictureData);
+//            addElementsUI(null,pictureData);
         }
+
+
+
     }
 
-    static void traverseRunElements(List<IRunElement> runElements) throws Exception {
+    StringBuilder para = new StringBuilder();
+    private static ArrayList<StringBuilder> paras = new ArrayList<>();
+    private static int paraIndex = 0;
+
+    public void traverseRunElements(List<IRunElement> runElements) throws Exception {
+
+        System.out.println("PARAINDICES"+ paras.size());
+        System.out.println("TRAVERSE RUN ELEMENTS");
+
         for (IRunElement runElement : runElements) {
             if (runElement instanceof XWPFFieldRun) {
                 XWPFFieldRun fieldRun = (XWPFFieldRun)runElement;
-                System.out.println(fieldRun.getClass().getName());
-                System.out.println(fieldRun);
+                System.out.println("fieldRunClassName "+fieldRun.getClass().getName());
+                System.out.println("fieldName "+fieldRun);
                 traversePictures(fieldRun.getEmbeddedPictures());
             } else if (runElement instanceof XWPFHyperlinkRun) {
                 XWPFHyperlinkRun hyperlinkRun = (XWPFHyperlinkRun)runElement;
-                System.out.println(hyperlinkRun.getClass().getName());
-                System.out.println(hyperlinkRun);
+                System.out.println("hyperLinkRunClassName "+ hyperlinkRun.getClass().getName());
+                System.out.println("hyperlinkRun "+hyperlinkRun);
                 traversePictures(hyperlinkRun.getEmbeddedPictures());
             } else if (runElement instanceof XWPFRun) {
                 XWPFRun run = (XWPFRun)runElement;
-                System.out.println(run.getClass().getName());
-                System.out.println(run);
+                System.out.println("runClassName "+run.getClass().getName());
+                System.out.println("run "+run);
+
+                //Appending text to paragraph
+//                paras.get(paraIndex).append(run);
+                para.append(run);
+                paras.add(para);
+//                System.out.println("PARA1TEXT "+para.toString());
+//                addTextViews(paras.get(paraIndex).toString());
+
                 traversePictures(run.getEmbeddedPictures());
+
             } else if (runElement instanceof XWPFSDT) {
                 XWPFSDT sDT = (XWPFSDT)runElement;
-                System.out.println(sDT);
-                System.out.println(sDT.getContent());
+                System.out.println("sDT"+sDT);
+                System.out.println("SDT_CONTENT "+sDT.getContent());
                 //ToDo: The SDT may have traversable content too.
             }
         }
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+//                addTextViews(paras.get(paraIndex).toString());
+            }
+        },5000);
+//        addTextViewsUsingLinearLayout();
     }
 
-    static void traverseTableCells(List<ICell> tableICells) throws Exception {
+    public void traverseTableCells(List<ICell> tableICells) throws Exception {
         for (ICell tableICell : tableICells) {
             if (tableICell instanceof XWPFSDTCell) {
                 XWPFSDTCell sDTCell = (XWPFSDTCell)tableICell;
-                System.out.println(sDTCell);
+                System.out.println("sDTCELL "+sDTCell);
                 //ToDo: The SDTCell may have traversable content too.
             } else if (tableICell instanceof XWPFTableCell) {
                 XWPFTableCell tableCell = (XWPFTableCell)tableICell;
-                System.out.println(tableCell);
+                System.out.println("TableCell "+tableCell);
                 traverseBodyElements(tableCell.getBodyElements());
             }
         }
     }
 
-    static void traverseTableRows(List<XWPFTableRow> tableRows) throws Exception {
+    public void traverseTableRows(List<XWPFTableRow> tableRows) throws Exception {
         for (XWPFTableRow tableRow : tableRows) {
-            System.out.println(tableRow);
+            System.out.println("TableRow "+tableRow);
             traverseTableCells(tableRow.getTableICells());
         }
     }
 
-    static void traverseBodyElements(List<IBodyElement> bodyElements) throws Exception {
+    public void traverseBodyElements(List<IBodyElement> bodyElements) throws Exception {
+        System.out.println("TRAVERSE BODY ELEMENTS");
+
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement instanceof XWPFParagraph) {
                 XWPFParagraph paragraph = (XWPFParagraph)bodyElement;
-                System.out.println(paragraph);
+                System.out.println("PARA "+paragraph);
+
+                //Creating textView & paragraph using String Builder
+                paras.add(new StringBuilder());
                 traverseRunElements(paragraph.getIRuns());
+                paraIndex = paraIndex + 1;
+
             } else if (bodyElement instanceof XWPFSDT) {
                 XWPFSDT sDT = (XWPFSDT)bodyElement;
-                System.out.println(sDT);
-                System.out.println(sDT.getContent());
+                System.out.println("SDT"+sDT);
+                System.out.println("SDT_CONTENT "+sDT.getContent());
                 //ToDo: The SDT may have traversable content too.
             } else if (bodyElement instanceof XWPFTable) {
                 XWPFTable table = (XWPFTable)bodyElement;
-                System.out.println(table);
+                System.out.println("TABLE"+table);
                 traverseTableRows(table.getRows());
             }
         }
     }
 
-    public static void printDescriptionOfImagesInCell(XWPFDocument cell) {
+    public  void printDescriptionOfImagesInCell(XWPFDocument cell) {
         List<XWPFParagraph> paragraphs = cell.getParagraphs();
         for (XWPFParagraph paragraph : paragraphs) {
             List<XWPFRun> runs = paragraph.getRuns();
@@ -436,4 +464,158 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    public  void addElements(XWPFPictureData pictureData){
+
+
+        ArrayList<ImageView> imageViews = new ArrayList<>();
+//
+        ImageView image = new ImageView(this);
+        image.setLayoutParams(new RelativeLayout.LayoutParams(200,200));
+        image.setMaxHeight(20);
+        image.setMaxWidth(20);
+        imageViews.add(image);
+        mainUI.addView(image);
+
+
+        // Adds the view to the layout
+        LinearLayout imageLayout = new LinearLayout(getApplicationContext());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.BELOW, image.getId());
+        imageLayout.setLayoutParams(params);
+        mainUI.addView(imageLayout);
+
+        //Calling to add textview below image view
+//        addTextViews();
+
+//        for (int i = 0; i < 15; i++) {
+
+            final ImageView imageView = new ImageView(this);
+            InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            imageView.setImageBitmap(bitmap);
+            Log.d("IMAGEDATA ",String.valueOf(bitmap));
+
+//        }
+
+    }
+
+    public void addTextViews(String content){
+
+
+        TextView text = new TextView(this);
+        text.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT));
+        text.setBackgroundColor(Color.GRAY);
+        text.setTextColor(Color.BLUE);
+        text.setTextSize(15);
+        mainUI.addView(text);
+
+        // Adds the view to the layout
+        LinearLayout textLayout = new LinearLayout(getApplicationContext());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.BELOW, text.getId());
+        textLayout.setLayoutParams(params);
+        mainUI.addView(textLayout);
+
+
+//        for (int i = 0; i < 15; i++) {
+
+            Log.d("ContentTEXT ",content);
+            final TextView textView = new TextView(this);
+            textView.setBackgroundColor(Color.GRAY);
+            textView.setTextColor(Color.BLUE);
+            textView.setTextSize(15);
+            textView.setText(content);
+            textLayout.addView(textView);
+
+//        }
+    }
+
+    public void addElementsUI(String content, XWPFPictureData pictureData){
+        ImageView image = new ImageView(this);
+        image.setLayoutParams(new RelativeLayout.LayoutParams(200,200));
+        image.setMaxHeight(20);
+        image.setMaxWidth(20);
+        mainUI.addView(image);
+
+        TextView text = new TextView(this);
+        text.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT));
+        text.setBackgroundColor(Color.GRAY);
+        text.setTextColor(Color.BLUE);
+        text.setTextSize(15);
+        mainUI.addView(text);
+
+        // Adds the view to the layout
+        LinearLayout Layouts = new LinearLayout(getApplicationContext());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        if(pictureData == null) {
+            params.addRule(RelativeLayout.BELOW, text.getId());
+            Layouts.setLayoutParams(params);
+            mainUI.addView(Layouts);
+
+            Log.d("ContentTEXT ",content);
+            final TextView textView = new TextView(this);
+            textView.setBackgroundColor(Color.GRAY);
+            textView.setTextColor(Color.BLUE);
+            textView.setTextSize(15);
+            textView.setText(content);
+            Layouts.addView(textView);
+
+        }else{
+            // Adds the view to the layout
+            params.addRule(RelativeLayout.BELOW, image.getId());
+            Layouts.setLayoutParams(params);
+            mainUI.addView(Layouts);
+
+            final ImageView imageView = new ImageView(this);
+            InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            imageView.setImageBitmap(bitmap);
+            Log.d("IMAGEDATA ",String.valueOf(bitmap));
+        }
+
+    }
+
+
+
+    public void addTextViewsUsingLinearLayout(){
+        final String[] str = {"one","two","three","asdfgf"};
+        @SuppressLint("WrongViewCast")
+        RelativeLayout rl = (RelativeLayout) findViewById(R.id.MainUI);
+        final TextView[] tv = new TextView[paras.size()];
+//        ArrayList<TextView> tv = new ArrayList<>();
+//        for (int i=0; i<paras.size(); i++)
+//        {
+//            tv[i] = new TextView(this);
+//            RelativeLayout.LayoutParams params=new RelativeLayout.LayoutParams
+//                    ((int) RelativeLayout.LayoutParams.WRAP_CONTENT,(int) RelativeLayout.LayoutParams.WRAP_CONTENT);
+//            params.leftMargin = 50;
+//            params.topMargin  = i*50;
+//            tv[i].setText(paras.get(i));
+//            tv[i].setTextSize((float) 20);
+//            tv[i].setPadding(20, 50, 20, 50);
+//            tv[i].setLayoutParams(params);
+//            rl.addView(tv[i]);
+//
+//
+//        }
+
+
+        for (int i=0; i<str.length; i++)
+        {
+            tv[i] = new TextView(this);
+            RelativeLayout.LayoutParams params=new RelativeLayout.LayoutParams
+                    ((int) RelativeLayout.LayoutParams.WRAP_CONTENT,(int) RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.leftMargin = 50;
+            params.topMargin  = i*50;
+            tv[i].setText(str[i]);
+            tv[i].setTextSize((float) 20);
+            tv[i].setPadding(20, 50, 20, 50);
+            tv[i].setLayoutParams(params);
+            rl.addView(tv[i]);
+        }
+
+    }
+
 }
