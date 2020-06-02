@@ -171,8 +171,7 @@ public class MainActivity extends AppCompatActivity {
                             String paragrapthText = paragraph.getText();
 
                             if(paragrapthText.length()>1) {
-//                                System.out.println("PARATEXT "+paragrapthText);
-                                addTextViews(paragrapthText);
+//                                addTextViews(paragrapthText);
 //                                addElementsUI(paragrapthText,null);
 
                             }
@@ -203,8 +202,6 @@ public class MainActivity extends AppCompatActivity {
             addElements(pictureData);
 //            addElementsUI(null,pictureData);
         }
-
-
 
     }
 
@@ -238,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
                 para.append(run);
                 paras.add(para);
 //                System.out.println("PARA1TEXT "+para.toString());
-//                addTextViews(paras.get(paraIndex).toString());
+                addTextViews(run.toString());
 
                 traversePictures(run.getEmbeddedPictures());
 
@@ -249,14 +246,6 @@ public class MainActivity extends AppCompatActivity {
                 //ToDo: The SDT may have traversable content too.
             }
         }
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-//                addTextViews(paras.get(paraIndex).toString());
-            }
-        },5000);
-//        addTextViewsUsingLinearLayout();
     }
 
     public void traverseTableCells(List<ICell> tableICells) throws Exception {
@@ -474,7 +463,9 @@ public class MainActivity extends AppCompatActivity {
         image.setLayoutParams(new RelativeLayout.LayoutParams(200,200));
         image.setMaxHeight(20);
         image.setMaxWidth(20);
-        imageViews.add(image);
+        InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
+        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+        image.setImageBitmap(bitmap);
         mainUI.addView(image);
 
 
@@ -490,11 +481,11 @@ public class MainActivity extends AppCompatActivity {
 
 //        for (int i = 0; i < 15; i++) {
 
-            final ImageView imageView = new ImageView(this);
-            InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            imageView.setImageBitmap(bitmap);
-            Log.d("IMAGEDATA ",String.valueOf(bitmap));
+//            final ImageView imageView = new ImageView(this);
+//            InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
+//            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+//            imageView.setImageBitmap(bitmap);
+//            Log.d("IMAGEDATA ",String.valueOf(bitmap));
 
 //        }
 
@@ -508,6 +499,7 @@ public class MainActivity extends AppCompatActivity {
         text.setBackgroundColor(Color.GRAY);
         text.setTextColor(Color.BLUE);
         text.setTextSize(15);
+        text.setText(content);
         mainUI.addView(text);
 
         // Adds the view to the layout
@@ -520,13 +512,13 @@ public class MainActivity extends AppCompatActivity {
 
 //        for (int i = 0; i < 15; i++) {
 
-            Log.d("ContentTEXT ",content);
-            final TextView textView = new TextView(this);
-            textView.setBackgroundColor(Color.GRAY);
-            textView.setTextColor(Color.BLUE);
-            textView.setTextSize(15);
-            textView.setText(content);
-            textLayout.addView(textView);
+//            Log.d("ContentTEXT ",content);
+//            final TextView textView = new TextView(this);
+//            textView.setBackgroundColor(Color.GRAY);
+//            textView.setTextColor(Color.BLUE);
+//            textView.setTextSize(15);
+//            textView.setText(content);
+//            textLayout.addView(textView);
 
 //        }
     }
