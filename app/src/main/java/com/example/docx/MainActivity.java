@@ -9,13 +9,17 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Typeface;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Layout;
+import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,6 +43,7 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.ICell;
 import org.apache.poi.xwpf.usermodel.IRunElement;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFieldRun;
 import org.apache.poi.xwpf.usermodel.XWPFHyperlinkRun;
@@ -195,11 +200,15 @@ public class MainActivity extends AppCompatActivity {
 
             //Create Image view to display images
 
+//            Log.i("Desc",picture.getDescription());
             System.out.println("Picture "+picture);
             XWPFPictureData pictureData = picture.getPictureData();
-            System.out.println("PictureData "+ pictureData);
+            Log.i("PictureData ", pictureData.toString());
 
-            addElements(pictureData);
+            long w = picture.getCTPicture().getSpPr().getXfrm().getExt().getCx();
+            long h = picture.getCTPicture().getSpPr().getXfrm().getExt().getCy();
+
+            addElements(pictureData,w,h);
 //            addElementsUI(null,pictureData);
         }
 
@@ -235,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 para.append(run);
                 paras.add(para);
 //                System.out.println("PARA1TEXT "+para.toString());
-                addTextViews(run.toString());
+                addTextViews(run.toString(),run.getFontSize(),run.isBold(),run.getUnderline());
 
                 traversePictures(run.getEmbeddedPictures());
 
@@ -454,17 +463,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public  void addElements(XWPFPictureData pictureData){
+    public  void addElements(XWPFPictureData pictureData,long w,long h){
 
 
         ArrayList<ImageView> imageViews = new ArrayList<>();
 //
         ImageView image = new ImageView(this);
-        image.setLayoutParams(new RelativeLayout.LayoutParams(200,200));
-        image.setMaxHeight(20);
-        image.setMaxWidth(20);
+        image.setLayoutParams(new RelativeLayout.LayoutParams((int)(w/2800),(int)(h/2800)));
+        image.setMaxHeight((int)h/2800);
+        image.setMaxWidth((int)w/2800);
+//        image.setAdjustViewBounds(true);
+//        image.setScaleType(ImageView.ScaleType.MATRIX);
+
         InputStream inputStream = new ByteArrayInputStream(pictureData.getData());
+
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+//        Matrix matrix = new Matrix();
+//        matrix.postScale(1/2800, 1/2800);
+//
+//        Bitmap scaledBitmap = Bitmap.createBitmap(bitmap,0,0,(int)w,(int)h,matrix,true);
         image.setImageBitmap(bitmap);
         mainUI.addView(image);
 
@@ -491,17 +509,43 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void addTextViews(String content){
+//    addTextViews(run.toString(),run.getColor(),run.getFontFamily(),run.getFontSize());
 
+    public void addTextViews(String content, int s, Boolean b, UnderlinePatterns u){
 
         TextView text = new TextView(this);
+        SpannableString c = new SpannableString(content);
+        c.setSpan(new UnderlineSpan(),0,content.length(),0);
         text.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT));
-        text.setBackgroundColor(Color.GRAY);
-        text.setTextColor(Color.BLUE);
-        text.setTextSize(15);
-        text.setText(content);
-        mainUI.addView(text);
+//        text.setBackgroundColor(Color.GRAY);
 
+       if(b) {
+           text.setTextColor(Color.BLACK);
+           text.setPadding(30, 10, 30, 10);
+           text.setTextSize((int) ((3 * s) / 2));
+           text.setTypeface(null, Typeface.BOLD);
+
+           if(u == UnderlinePatterns.NONE){
+               text.setText(content);
+           }
+           else{
+               text.setText(c);
+           }
+           mainUI.addView(text);
+       }
+       else{
+           text.setTextColor(Color.BLACK);
+           text.setPadding(30, 10, 30, 10);
+           text.setTextSize((int) ((3 * s) / 2));
+
+           if(u == UnderlinePatterns.NONE){
+               text.setText(content);
+           }
+           else{
+               text.setText(c);
+           }
+           mainUI.addView(text);
+       }
         // Adds the view to the layout
         LinearLayout textLayout = new LinearLayout(getApplicationContext());
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
