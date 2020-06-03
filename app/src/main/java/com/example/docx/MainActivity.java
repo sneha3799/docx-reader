@@ -11,6 +11,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Typeface;
+import android.graphics.fonts.FontFamily;
+import android.graphics.fonts.FontStyle;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -65,9 +68,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     LinearLayout mainUI;
@@ -168,19 +173,7 @@ public class MainActivity extends AppCompatActivity {
                         traverseBodyElements(docx.getBodyElements());
                         picList = docx.getAllPackagePictures();
 
-                        docx.close();
 
-
-                        List<XWPFParagraph> paragraphList = docx.getParagraphs();
-                        for (XWPFParagraph paragraph : paragraphList) {
-                            String paragrapthText = paragraph.getText();
-
-                            if(paragrapthText.length()>1) {
-//                                addTextViews(paragrapthText);
-//                                addElementsUI(paragrapthText,null);
-
-                            }
-                        }
                 }
             }else {
                 Toast.makeText(this, "Your file is not loaded", Toast.LENGTH_SHORT).show();
@@ -195,6 +188,64 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void textViews(XWPFParagraph paragraph,List<IRunElement> runElements) {
+        String paragraphText = paragraph.getParagraphText();
+
+        int size;
+        UnderlinePatterns u;
+        Boolean b;
+        String ff;
+
+        for (IRunElement runElement : runElements) {
+            if (runElement instanceof XWPFRun) {
+                XWPFRun run = (XWPFRun) runElement;
+                System.out.println("runClassName " + run.getClass().getName());
+                System.out.println("run " + run);
+
+                //Appending text to paragraph
+//                paras.get(paraIndex).append(run);
+                para.append(run);
+                paras.add(para);
+//                System.out.println("PARA1TEXT "+para.toString());
+                Log.i("font family", run.getFontFamily());
+                Log.i("font class", run.getFontName());
+
+                size = run.getFontSize();
+                u = run.getUnderline();
+                b = run.isBold();
+                ff = run.getFontFamily();
+
+//                ArrayList<String> a = new ArrayList<String>();
+//                a.add(paragraphText);
+//
+//
+//                if(!a.contains(paragraphText)){
+//                    a.add(paragraphText);
+//                }
+
+                    if (paragraphText.length() > 1) {
+
+                        addTextViews(paragraphText, size, b, u, ff);
+
+                    }
+
+
+//                                addTextViews(paragrapthText);
+//                                addElementsUI(paragrapthText,null);
+//                    try {
+////                        Thread.sleep(1000);
+//
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                addTextViews(run.toString(), run.getFontSize(), run.isBold(), run.getUnderline(), run.getFontFamily());
+
+
+
+            }
+        }
+
+    }
     public void traversePictures(List<XWPFPicture> pictures)  {
         for (XWPFPicture picture : pictures) {
 
@@ -244,7 +295,10 @@ public class MainActivity extends AppCompatActivity {
                 para.append(run);
                 paras.add(para);
 //                System.out.println("PARA1TEXT "+para.toString());
-                addTextViews(run.toString(),run.getFontSize(),run.isBold(),run.getUnderline());
+                Log.i("font family",run.getFontFamily());
+                Log.i("font class",run.getFontName());
+
+//                addTextViews(run.toString(),run.getFontSize(),run.isBold(),run.getUnderline(),run.getFontFamily());
 
                 traversePictures(run.getEmbeddedPictures());
 
@@ -288,6 +342,7 @@ public class MainActivity extends AppCompatActivity {
 
                 //Creating textView & paragraph using String Builder
                 paras.add(new StringBuilder());
+                textViews(paragraph,paragraph.getIRuns());
                 traverseRunElements(paragraph.getIRuns());
                 paraIndex = paraIndex + 1;
 
@@ -511,7 +566,8 @@ public class MainActivity extends AppCompatActivity {
 
 //    addTextViews(run.toString(),run.getColor(),run.getFontFamily(),run.getFontSize());
 
-    public void addTextViews(String content, int s, Boolean b, UnderlinePatterns u){
+    public void addTextViews(String content, int s, Boolean b, UnderlinePatterns u,String f){
+
 
         TextView text = new TextView(this);
         SpannableString c = new SpannableString(content);
@@ -523,13 +579,16 @@ public class MainActivity extends AppCompatActivity {
            text.setTextColor(Color.BLACK);
            text.setPadding(30, 10, 30, 10);
            text.setTextSize((int) ((3 * s) / 2));
+//           text.setTypeface(null, FontStyle.fontFamily);
            text.setTypeface(null, Typeface.BOLD);
 
            if(u == UnderlinePatterns.NONE){
                text.setText(content);
            }
            else{
+//               text.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                text.setText(c);
+               text.setGravity(Gravity.CENTER);
            }
            mainUI.addView(text);
        }
@@ -542,7 +601,9 @@ public class MainActivity extends AppCompatActivity {
                text.setText(content);
            }
            else{
+//               text.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                text.setText(c);
+               text.setGravity(Gravity.CENTER);
            }
            mainUI.addView(text);
        }
