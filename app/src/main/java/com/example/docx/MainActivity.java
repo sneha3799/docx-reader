@@ -178,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
                             if(paragrapthText.length()>1) {
 //                                addTextViews(paragrapthText);
 //                                addElementsUI(paragrapthText,null);
+
                             }
                         }
                 }
@@ -243,10 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 para.append(run);
                 paras.add(para);
 //                System.out.println("PARA1TEXT "+para.toString());
-                addTextViews(run.toString(),run.getFontSize(),run.isBold(),run.getUnderline(),run.getFontFamily());
-                Log.d("FONTFAM ",String.valueOf(run.getFontFamily()));
-                Log.d("FONTNAME ",String.valueOf(run.getFontName()));
-                Log.d("FONTSIZE ",String.valueOf(run.getFontSize()));
+                addTextViews(run.toString(),run.getFontSize(),run.isBold(),run.getUnderline());
 
                 traversePictures(run.getEmbeddedPictures());
 
@@ -513,14 +511,14 @@ public class MainActivity extends AppCompatActivity {
 
 //    addTextViews(run.toString(),run.getColor(),run.getFontFamily(),run.getFontSize());
 
-    public void addTextViews(String content, int s, Boolean b, UnderlinePatterns u,String fontFamily){
+    public void addTextViews(String content, int s, Boolean b, UnderlinePatterns u){
 
         TextView text = new TextView(this);
         SpannableString c = new SpannableString(content);
         c.setSpan(new UnderlineSpan(),0,content.length(),0);
         text.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT));
 //        text.setBackgroundColor(Color.GRAY);
-        text.setTextAppearance(R.style.FontFamily);
+
        if(b) {
            text.setTextColor(Color.BLACK);
            text.setPadding(30, 10, 30, 10);
