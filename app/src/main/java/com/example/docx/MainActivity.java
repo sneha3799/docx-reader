@@ -21,6 +21,7 @@ import android.text.Layout;
 import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.UnderlineSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -845,7 +846,12 @@ public class MainActivity extends AppCompatActivity {
             long w = picture.getCTPicture().getSpPr().getXfrm().getExt().getCx();
             long h = picture.getCTPicture().getSpPr().getXfrm().getExt().getCy();
 
-            addElements(pictureData,w,h);
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int height = displayMetrics.heightPixels;
+            int width = displayMetrics.widthPixels;
+
+            addElements(pictureData,w,h,height,width);
 //            addElementsUI(null,pictureData);
         }
 
@@ -1102,12 +1108,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public  void addElements(XWPFPictureData pictureData,long w,long h){
+    public  void addElements(XWPFPictureData pictureData,long w,long h,int height,int width){
 
         ArrayList<ImageView> imageViews = new ArrayList<>();
 //
         ImageView image = new ImageView(this);
-        image.setLayoutParams(new RelativeLayout.LayoutParams((int)(w/2800),(int)(h/2800)));
+
+        if((int)w > width){
+            w = width - 100;
+            h = h / (3 *(width-100));
+        }
+
+        image.setForegroundGravity(Gravity.CENTER);
+        image.setPadding(100,30,50,30);
+        image.setLayoutParams(new RelativeLayout.LayoutParams((int)(w),(int)(h)));
         image.setMaxHeight((int)h/2800);
         image.setMaxWidth((int)w/2800);
 //        image.setAdjustViewBounds(true);
@@ -1214,9 +1228,10 @@ public class MainActivity extends AppCompatActivity {
     public void setProperText(TextView text,String content, int s, Boolean b, UnderlinePatterns u,String fontFamily){
         SpannableString c = new SpannableString(content);
         c.setSpan(new UnderlineSpan(),0,content.length(),0);
+        text.setPadding(60, 10, 50, 10);
+
         if (b) {
             text.setTextColor(Color.BLACK);
-            text.setPadding(30, 10, 30, 10);
             text.setTextSize((int) ((3 * s) / 2));
             //text.setTypeface(null, FontStyle.fontFamily);
             text.setTypeface(null, Typeface.BOLD);
@@ -1233,7 +1248,6 @@ public class MainActivity extends AppCompatActivity {
 //                }
         } else {
             text.setTextColor(Color.BLACK);
-            text.setPadding(30, 10, 30, 10);
             text.setTextSize((int) ((3 * s) / 2));
 
             if (u == UnderlinePatterns.NONE) {
